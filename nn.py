@@ -66,31 +66,28 @@ def generate_distances_matrix(coordinates, is_pseudo_euclidian):
     distances_matrix.append(distances_i)
   return distances_matrix
 
-
 def run_nn_heuristic(distances_matrix):
   starting_city = random.randint(0, len(distances_matrix) - 1)
-  current_city = starting_city
   visited_cities_indexes = set()
-  total_distance = 0
+  current_city = starting_city
   solution = []
+  total_distance = 0
 
-  for _ in range(len(distances_matrix)):
-    visited_cities_indexes.add(current_city)
-    solution.append(current_city)
+  while len(visited_cities_indexes) != len(distances_matrix):
     nearest_distance = math.inf
-
+    
     for neighbor_index in range(len(distances_matrix)):
       distance_to_neighbor = distances_matrix[current_city][neighbor_index]
-      if neighbor_index not in visited_cities_indexes and distance_to_neighbor < nearest_distance:
+      if neighbor_index != current_city and neighbor_index not in visited_cities_indexes and distance_to_neighbor < nearest_distance:
         nearest_city_index = neighbor_index
         nearest_distance = distance_to_neighbor
 
-    total_distance += nearest_distance
+    solution.append(current_city)
+    visited_cities_indexes.add(current_city)
     current_city = nearest_city_index
 
-  total_distance += distances_matrix[current_city][starting_city]
   solution.append(starting_city)
-  return total_distance, solution
+  return sum_route_cost(solution, distances_matrix), solution
 
 def cost_change(distances_matrix, v1, v2, v3, v4):
   return distances_matrix[v1][v3] + distances_matrix[v2][v4] - distances_matrix[v1][v2] - distances_matrix[v3][v4]
@@ -118,25 +115,73 @@ def run_2opt_heuristic(distances_matrix, candidate_solution):
         has_optimized = True
     
     candidate_solution = best
-  return reduce(lambda a, b: a + b, best), best
+  return sum_route_cost(best, distances_matrix), best
+
+
+def reverse_segment_if_better(distances_matrix, tour, i, j, k):
+  def distance(u, v):
+    return distances_matrix[u][v]
+
+  A, B, C, D, E, F = tour[i-1], tour[i], tour[j-1], tour[j], tour[k-1], tour[k % len(tour)]
+  d0 = distance(A, B) + distance(C, D) + distance(E, F)
+  d1 = distance(A, C) + distance(B, D) + distance(E, F)
+  d2 = distance(A, B) + distance(C, E) + distance(D, F)
+  d3 = distance(A, D) + distance(E, B) + distance(C, F)
+  d4 = distance(F, B) + distance(C, D) + distance(E, A)
+
+  if d0 > d1:
+    tour[i:j] = reversed(tour[i:j])
+    return -d0 + d1
+  elif d0 > d2:
+    tour[j:k] = reversed(tour[j:k])
+    return -d0 + d2
+  elif d0 > d4:
+    tour[i:k] = reversed(tour[i:k])
+    return -d0 + d4
+  elif d0 > d3:
+    tmp = tour[j:k] + tour[i:j]
+    tour[i:k] = tmp
+    return -d0 + d3
+  return 0
 
 def run_3opt_heuristic(distances_matrix, candidate_solution):
-  edge_pairs_combinations = list(itertools.combinations(range(0, len(distances_matrix)), 3))
+  edge_triples_combinations = list(itertools.combinations(range(0, len(distances_matrix)), 3))
+  best = candidate_solution
+  has_optimized = True
+  while has_optimized:
+    has_optimized = False
+    for i, j, k in edge_triples_combinations:
+      for u, v, w in itertools.permutations([best[i], best[j], best[k]]):
+        # TODO: calcular corretamente o 3-opt. tudo aqui está incorreto
+        # inspiraçao: https://en.wikipedia.org/wiki/3-opt
+        candidate = candidate_solution.copy()
+        print(candidate)
+        change = reverse_segment_if_better(distances_matrix, candidate, u, v, w
 
-  return reduce(lambda a, b: a + b, best), best
+        if (change < 0):
+          has_optimized = True
+          # Primeiro aprimorante
+          # print('OTIMIZOU')
+          print(candidate)
+          return sum_route_cost(candidate, distances_matrix), candidate
+  return sum_route_cost(best, distances_matrix), best
 
+def sum_route_cost(solucao, matrizDistancias):
+    custo = 0
+    for i in range(len(solucao)-1):
+        custo += matrizDistancias[solucao[i]][solucao[i+1]]
+    return custo
 
 def run_vnd_heuristic(distances_matrix):
   solution_cost, solution = run_nn_heuristic(distances_matrix)
-
+  print('  KNN', solution_cost)
   while True:
-    # # Call switch most expensive edges
-    # solution_cost, solution = run_swith_expensive_edge_heuristic(distances_matrix, solution)
-    # Call 2-optonce local optimal is found for most expensive edges
     solution_cost, solution = run_2opt_heuristic(distances_matrix, solution)
+    print('2-OPT', solution_cost)
     # Call 3-opt once local optimal is found for 2-opt
     solution_cost, solution = run_3opt_heuristic(distances_matrix, solution)
-  
+    print('3-OPT', solution_cost)
+    raise 
   return solution_cost, solution
 
 
