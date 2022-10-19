@@ -146,6 +146,9 @@ def reverse_segment_if_better(distances_matrix, tour, i, j, k):
 
 def run_3opt_heuristic(distances_matrix, candidate_solution):
   edge_triples_combinations = list(itertools.combinations(range(0, len(distances_matrix)), 3))
+  print(edge_triples_combinations)
+
+  raise 1
   best = candidate_solution
   has_optimized = True
   while has_optimized:
@@ -154,9 +157,10 @@ def run_3opt_heuristic(distances_matrix, candidate_solution):
       for u, v, w in itertools.permutations([best[i], best[j], best[k]]):
         # TODO: calcular corretamente o 3-opt. tudo aqui está incorreto
         # inspiraçao: https://en.wikipedia.org/wiki/3-opt
+        # inspiraçao: http://matejgazda.com/tsp-algorithms-2-opt-3-opt-in-python/
         candidate = candidate_solution.copy()
         print(candidate)
-        change = reverse_segment_if_better(distances_matrix, candidate, u, v, w
+        change = reverse_segment_if_better(distances_matrix, candidate, u, v, w)
 
         if (change < 0):
           has_optimized = True
