@@ -95,7 +95,6 @@ def run_nn_heuristic(distances_matrix):
 def cost_change(distances_matrix, v1, v2, v3, v4):
   return distances_matrix[v1][v3] + distances_matrix[v2][v4] - distances_matrix[v1][v2] - distances_matrix[v3][v4]
 
-
 def run_2opt_heuristic(distances_matrix, candidate_solution):
   edge_pairs_combinations = list(itertools.combinations(range(0, len(distances_matrix)), 2))
   best = candidate_solution
@@ -112,16 +111,15 @@ def run_2opt_heuristic(distances_matrix, candidate_solution):
 
       change = cost_change(distances_matrix, v1, v2, u1, u2)
       if (change < 0):
-        novaSolucao = best[:i+1]
-        novaSolucao.extend(reversed(best[i+1:j+1]))
-        novaSolucao.extend(best[j+1:])
-        best = novaSolucao
+        new_best = best[:i+1]
+        new_best.extend(reversed(best[i+1:j+1]))
+        new_best.extend(best[j+1:])
+        best = new_best
         has_optimized = True
         has_optimized_at_least_once = True
     
     candidate_solution = best
   return sum_route_cost(best, distances_matrix), best, has_optimized_at_least_once
-
 
 def reverse_segment_if_better(distances_matrix, tour, i, j, k):
   def distance(u, v):
@@ -157,8 +155,6 @@ def reverse_segment_if_better(distances_matrix, tour, i, j, k):
   resulting_tour.append(resulting_tour[0])
   return resulting_delta, resulting_tour
 
-  
-
 def run_3opt_heuristic(distances_matrix, candidate_solution):
   edge_triples_combinations = list(itertools.combinations(range(0, len(distances_matrix)), 3))
   best = candidate_solution
@@ -182,11 +178,11 @@ def possible_segments(N):
     segments = ((i, j, k) for i in range(N) for j in range(i + 2, N-1) for k in range(j + 2, N - 1 + (i > 0)))
     return segments
 
-def sum_route_cost(solucao, matrizDistancias):
-    custo = 0
-    for i in range(len(solucao)-1):
-        custo += matrizDistancias[solucao[i]][solucao[i+1]]
-    return custo
+def sum_route_cost(route, distances_matrix):
+    distance = 0
+    for i in range(len(route)-1):
+        distance += distances_matrix[route[i]][route[i+1]]
+    return distance
 
 def run_vnd_heuristic(distances_matrix):
   solution_cost, solution = run_nn_heuristic(distances_matrix)
