@@ -5,7 +5,7 @@ import os
 import itertools
 from functools import reduce
 
-RUNS = 1
+RUNS = 15
 
 import os
 clear = lambda: os.system('cls')
@@ -36,13 +36,10 @@ def execute_runs(output_file, dir, att = False):
       print(f'Executing run {x+1} for {filename}')
       start = time.time()
       result, path = run_vnd_heuristic(distances_matrix)
-      # print(path)
-      path.sort()
-      # print(path)
       elapsed = time.time() - start
       distances_sum += result
       time_sum += elapsed
-      # clear()
+      clear()
 
     output_file.write(f'{filename}\t{round(distances_sum/float(RUNS))}\t{((time_sum/float(RUNS))*float(RUNS) * 1000):.2f}\n') 
 
@@ -148,8 +145,6 @@ def reverse_segment_if_better(distances_matrix, tour, i, j, k):
   resulting_delta = 0
   resulting_tour = tour.copy()
 
-  # retornar diferença entre solucao atual e nova solucao
-  # > 0 => MELHOROU
   if d0 > d1:
     resulting_delta, resulting_tour = (d0 - d1, (list(reversed(first_segment)) + second_segment + list(reversed(third_segment))))
   elif d0 > d2:
@@ -159,6 +154,7 @@ def reverse_segment_if_better(distances_matrix, tour, i, j, k):
   elif d0 > d3:
     resulting_delta, resulting_tour = (d0 - d3, (first_segment + list(reversed(second_segment)) + list(reversed(third_segment))))
 
+  resulting_tour.append(resulting_tour[0])
   return resulting_delta, resulting_tour
 
   
@@ -174,14 +170,12 @@ def run_3opt_heuristic(distances_matrix, candidate_solution):
       # source: https://en.wikipedia.org/wiki/3-opt
       # source: http://matejgazda.com/tsp-algorithms-2-opt-3-opt-in-python/
 
-      delta, candidate_solution = reverse_segment_if_better(distances_matrix, candidate_solution, u, v, w)
-
+      delta, candidate_solution = reverse_segment_if_better(distances_matrix, candidate_solution[:-1], u, v, w)
       if (delta > 0):
         has_optimized = True
         has_optimized_at_least_once = True
         best = candidate_solution
         
-  # best.append(best[0])
   return sum_route_cost(best, distances_matrix), best, has_optimized_at_least_once
 
 def possible_segments(N):
@@ -207,4 +201,4 @@ def run_vnd_heuristic(distances_matrix):
 with open('output.txt', 'w') as output_file:
   output_file.write(f'file_name\tavg_result ({RUNS} runs)\tavg_time ({RUNS} runs, ms)\n')
   execute_runs(output_file, "ATT/", True,)
-  # execute_runs(output_file, "EUC_2D/")
+  execute_runs(output_file, "EUC_2D/")
